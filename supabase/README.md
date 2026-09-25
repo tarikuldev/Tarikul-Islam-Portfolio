@@ -24,10 +24,11 @@ which validates the input, rate-limits by IP and stores it in the
    `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected by Supabase
    automatically; never put them in this repo.
 
-3. In `assets/js/main.js`, replace `YOUR_PROJECT_REF` in `CONTACT_ENDPOINT`
-   with your project ref, then commit and push.
+3. `CONTACT_ENDPOINT` in `assets/js/main.js` must point at
+   `https://<project-ref>.supabase.co/functions/v1/contact` (currently
+   configured for project `hqzbguidhxppltpyqmzz`).
 
-To test locally, add `http://localhost:8000` to `ALLOWED_ORIGINS`.
+To test locally, temporarily add `http://localhost:8000` to `ALLOWED_ORIGINS`.
 
 ## Viewing messages
 

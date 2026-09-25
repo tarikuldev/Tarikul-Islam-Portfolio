@@ -1,299 +1,292 @@
-// Dark Mode Toggle
-const darkModeToggle = document.getElementById("dark-mode-toggle");
-const html = document.documentElement;
+"use strict";
 
-// Check for saved theme preference or default to light mode
-const currentTheme = localStorage.getItem('theme') || 'light';
-if (currentTheme === 'dark') {
-  html.classList.add('dark');
-}
+// Public Supabase Edge Function URL (not a secret). See supabase/README.md.
+const CONTACT_ENDPOINT =
+  "https://hqzbguidhxppltpyqmzz.supabase.co/functions/v1/contact";
+const CONTACT_TIMEOUT_MS = 15000;
+const SUBMIT_COOLDOWN_MS = 30000;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-darkModeToggle.addEventListener('click', () => {
-  html.classList.toggle('dark');
-  
-  // Save theme preference
-  const theme = html.classList.contains('dark') ? 'dark' : 'light';
-  localStorage.setItem('theme', theme);
-});
+const NAVBAR_OFFSET = 80; // Fixed navbar height used when scrolling to sections
+const REVEAL_OFFSET = 100; // How far into the viewport an element must be to animate in
 
-// Mobile Menu Toggle
-const mobileMenuButton = document.getElementById("mobile-menu-button");
-const mobileMenu = document.getElementById("mobile-menu");
-
-mobileMenuButton.addEventListener("click", () => {
-  mobileMenu.classList.toggle("hidden");
-});
-
-// Navbar Scroll Effect
-const navbar = document.getElementById("navbar");
-
-window.addEventListener("scroll", () => {
-  if (window.scrollY > 50) {
-    navbar.classList.add("py-2");
-    navbar.classList.remove("py-4");
-  } else {
-    navbar.classList.add("py-4");
-    navbar.classList.remove("py-2");
-  }
-});
-
-// Typewriter Effect
-const typewriterElement = document.getElementById("typewriter");
-const phrases = [
+const TYPEWRITER_PHRASES = [
   "Web Developer",
   "Mobile App Developer",
   "UI/UX Designer",
   "Software Engineer",
 ];
-let phraseIndex = 0;
-let charIndex = 0;
-let isDeleting = false;
-let typingSpeed = 100;
 
-function typeWriter() {
-  const currentPhrase = phrases[phraseIndex];
+// Dark mode toggle. The saved theme is applied by an inline script in <head>.
+function initThemeToggle() {
+  const root = document.documentElement;
+  const toggle = document.getElementById("dark-mode-toggle");
 
-  if (isDeleting) {
-    typewriterElement.textContent = currentPhrase.substring(0, charIndex - 1);
-    charIndex--;
-    typingSpeed = 50;
-  } else {
-    typewriterElement.textContent = currentPhrase.substring(0, charIndex + 1);
-    charIndex++;
-    typingSpeed = 100;
-  }
+  toggle.setAttribute("aria-pressed", String(root.classList.contains("dark")));
 
-  if (!isDeleting && charIndex === currentPhrase.length) {
-    isDeleting = true;
-    typingSpeed = 1000; // Pause at the end
-  } else if (isDeleting && charIndex === 0) {
-    isDeleting = false;
-    phraseIndex = (phraseIndex + 1) % phrases.length;
-    typingSpeed = 500; // Pause before typing next phrase
-  }
-
-  setTimeout(typeWriter, typingSpeed);
-}
-
-// Start the typewriter effect
-setTimeout(typeWriter, 1000);
-
-// Scroll Animation
-const animatedElements = document.querySelectorAll(".animated-element");
-
-function checkScroll() {
-  animatedElements.forEach((element) => {
-    const elementTop = element.getBoundingClientRect().top;
-    const windowHeight = window.innerHeight;
-
-    if (elementTop < windowHeight - 100) {
-      element.classList.add("fade-in");
+  toggle.addEventListener("click", () => {
+    const isDark = root.classList.toggle("dark");
+    toggle.setAttribute("aria-pressed", String(isDark));
+    try {
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+    } catch {
+      // Storage unavailable: the theme still applies for this visit.
     }
   });
 }
 
-// Initial check
-checkScroll();
+// Mobile menu. Returns a function that closes the menu.
+function initMobileMenu() {
+  const button = document.getElementById("mobile-menu-button");
+  const menu = document.getElementById("mobile-menu");
 
-// Check on scroll
-window.addEventListener("scroll", checkScroll);
+  const setOpen = (open) => {
+    menu.classList.toggle("hidden", !open);
+    button.setAttribute("aria-expanded", String(open));
+    button.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+  };
 
-// Progress Bars Animation
-function animateProgressBars() {
-  const progressBars = document.querySelectorAll(".progress-bar");
-
-  progressBars.forEach((bar) => {
-    const width = bar.getAttribute("data-width");
-    bar.style.width = width + "%";
+  button.addEventListener("click", () => {
+    setOpen(menu.classList.contains("hidden"));
   });
+
+  return () => setOpen(false);
 }
 
-// Animate progress bars when they come into view
-const skillsSection = document.getElementById("skills");
+// Smooth scrolling for in-page links, offset for the fixed navbar.
+// A bare "#" link (logo, back-to-top) scrolls to the top.
+function initSmoothScroll(closeMobileMenu) {
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest('a[href^="#"]');
+    if (!link) return;
+    event.preventDefault();
 
-function checkSkillsSection() {
-  const skillsSectionTop = skillsSection.getBoundingClientRect().top;
-  const windowHeight = window.innerHeight;
-
-  if (skillsSectionTop < windowHeight - 100) {
-    animateProgressBars();
-    window.removeEventListener("scroll", checkSkillsSection);
-  }
-}
-
-window.addEventListener("scroll", checkSkillsSection);
-
-
-
-// Stats Counter Animation
-function animateCounters() {
-  const statNumbers = document.querySelectorAll(".stat-number");
-
-  statNumbers.forEach((stat) => {
-    const target = parseInt(stat.getAttribute("data-count"));
-    let count = 0;
-    const duration = 2000; // 2 seconds
-    const increment = target / (duration / 16); // 60fps
-
-    const counter = setInterval(() => {
-      count += increment;
-
-      if (count >= target) {
-        stat.textContent = target;
-        clearInterval(counter);
-      } else {
-        stat.textContent = Math.floor(count);
-      }
-    }, 16);
-  });
-}
-
-// Animate counters when they come into view
-const aboutSection = document.getElementById("about");
-
-function checkAboutSection() {
-  const aboutSectionTop = aboutSection.getBoundingClientRect().top;
-  const windowHeight = window.innerHeight;
-
-  if (aboutSectionTop < windowHeight - 100) {
-    animateCounters();
-    window.removeEventListener("scroll", checkAboutSection);
-  }
-}
-
-window.addEventListener("scroll", checkAboutSection);
-
-// Back to Top Button
-const backToTopButton = document.getElementById("back-to-top");
-
-window.addEventListener("scroll", () => {
-  if (window.scrollY > 300) {
-    backToTopButton.classList.add("visible");
-  } else {
-    backToTopButton.classList.remove("visible");
-  }
-});
-
-backToTopButton.addEventListener("click", (e) => {
-  e.preventDefault();
-  window.scrollTo({ top: 0, behavior: "smooth" });
-});
-
-// Form Submission
-// Public Supabase Edge Function URL (not a secret). See supabase/README.md.
-const CONTACT_ENDPOINT =
-  "https://hqzbguidhxppltpyqmzz.supabase.co/functions/v1/contact";
-const SUBMIT_COOLDOWN_MS = 30000;
-
-const contactForm = document.getElementById("contact-form");
-const contactSubmitButton = contactForm.querySelector('button[type="submit"]');
-let isSubmitting = false;
-let lastSubmittedAt = 0;
-
-contactForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  if (isSubmitting) return;
-  if (Date.now() - lastSubmittedAt < SUBMIT_COOLDOWN_MS) {
-    alert("Your message was already sent. Please wait a moment before sending another.");
-    return;
-  }
-
-  // Get form values
-  const name = document.getElementById("name").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const subject = document.getElementById("subject").value.trim();
-  const message = document.getElementById("message").value.trim();
-  const website = document.getElementById("website").value; // honeypot
-
-  if (!name || !email || !subject || !message) {
-    alert("Please fill in all fields.");
-    return;
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    alert("Please enter a valid email address.");
-    return;
-  }
-
-  isSubmitting = true;
-  contactSubmitButton.disabled = true;
-
-  try {
-    const response = await fetch(CONTACT_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, subject, message, website }),
-      signal: AbortSignal.timeout(15000),
-    });
-
-    if (response.status === 429) {
-      alert("Too many messages sent. Please try again in a few minutes.");
+    const targetId = link.getAttribute("href");
+    if (targetId === "#") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-    lastSubmittedAt = Date.now();
-    contactForm.reset();
-    alert("Thank you for your message! I will get back to you soon.");
-  } catch (err) {
-    console.error("Contact form error:", err);
-    alert("Sorry, your message could not be sent. Please try again later.");
-  } finally {
-    isSubmitting = false;
-    contactSubmitButton.disabled = false;
+    const target = document.querySelector(targetId);
+    if (!target) return;
+
+    window.scrollTo({
+      top: target.offsetTop - NAVBAR_OFFSET,
+      behavior: "smooth",
+    });
+    closeMobileMenu();
+  });
+}
+
+function initTypewriter() {
+  const element = document.getElementById("typewriter");
+  let phraseIndex = 0;
+  let charIndex = 0;
+  let isDeleting = false;
+
+  function tick() {
+    const phrase = TYPEWRITER_PHRASES[phraseIndex];
+    charIndex += isDeleting ? -1 : 1;
+    element.textContent = phrase.substring(0, charIndex);
+
+    let delay = isDeleting ? 50 : 100;
+    if (!isDeleting && charIndex === phrase.length) {
+      isDeleting = true;
+      delay = 1000; // Pause at the end of a phrase
+    } else if (isDeleting && charIndex === 0) {
+      isDeleting = false;
+      phraseIndex = (phraseIndex + 1) % TYPEWRITER_PHRASES.length;
+      delay = 500; // Pause before the next phrase
+    }
+
+    setTimeout(tick, delay);
   }
-});
 
-// Smooth scrolling for navigation links
-document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-  anchor.addEventListener("click", function (e) {
-    e.preventDefault();
+  setTimeout(tick, 1000);
+}
 
-    const targetId = this.getAttribute("href");
+function animateProgressBars() {
+  document.querySelectorAll(".progress-bar").forEach((bar) => {
+    bar.style.width = `${bar.dataset.width}%`;
+  });
+}
 
-    if (targetId === "#") return;
+function animateCounters() {
+  const duration = 2000;
 
-    const targetElement = document.querySelector(targetId);
+  document.querySelectorAll(".stat-number").forEach((stat) => {
+    const target = Number(stat.dataset.count) || 0;
+    const start = performance.now();
 
-    if (targetElement) {
-      window.scrollTo({
-        top: targetElement.offsetTop - 80, // Adjust for navbar height
-        behavior: "smooth",
-      });
+    function step(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      stat.textContent = Math.floor(target * progress);
+      if (progress < 1) requestAnimationFrame(step);
+    }
 
-      // Close mobile menu if open
-      if (!mobileMenu.classList.contains("hidden")) {
-        mobileMenu.classList.add("hidden");
+    requestAnimationFrame(step);
+  });
+}
+
+// All scroll-driven behaviour in one passive, frame-throttled listener.
+function initScrollEffects() {
+  const navbar = document.getElementById("navbar");
+  const backToTop = document.getElementById("back-to-top");
+  const skillsSection = document.getElementById("skills");
+  const aboutSection = document.getElementById("about");
+  const sections = document.querySelectorAll("section");
+  const navLinks = document.querySelectorAll(".nav-link");
+
+  let pendingReveals = [...document.querySelectorAll(".animated-element")];
+  let progressBarsStarted = false;
+  let countersStarted = false;
+  let frameRequested = false;
+
+  const isInView = (element) =>
+    element.getBoundingClientRect().top < window.innerHeight - REVEAL_OFFSET;
+
+  function revealElements() {
+    pendingReveals = pendingReveals.filter((element) => {
+      if (!isInView(element)) return true;
+      element.classList.add("fade-in");
+      return false;
+    });
+  }
+
+  function updateActiveNavLink(scrollY) {
+    let currentId = "";
+    sections.forEach((section) => {
+      if (scrollY >= section.offsetTop - 100) currentId = section.id;
+    });
+
+    navLinks.forEach((link) => {
+      link.classList.toggle(
+        "active",
+        link.getAttribute("href") === `#${currentId}`
+      );
+    });
+  }
+
+  function update() {
+    frameRequested = false;
+    const { scrollY } = window;
+
+    navbar.classList.toggle("py-2", scrollY > 50);
+    navbar.classList.toggle("py-4", scrollY <= 50);
+    backToTop.classList.toggle("visible", scrollY > 300);
+
+    if (pendingReveals.length) revealElements();
+
+    if (!progressBarsStarted && isInView(skillsSection)) {
+      progressBarsStarted = true;
+      animateProgressBars();
+    }
+    if (!countersStarted && isInView(aboutSection)) {
+      countersStarted = true;
+      animateCounters();
+    }
+
+    updateActiveNavLink(scrollY);
+  }
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (frameRequested) return;
+      frameRequested = true;
+      requestAnimationFrame(update);
+    },
+    { passive: true }
+  );
+
+  update();
+}
+
+// Fetch with a timeout that also works where AbortSignal.timeout is missing.
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Contact form: validates, then posts to the Supabase Edge Function, which
+// re-validates, rate-limits and stores the message server-side.
+function initContactForm() {
+  const form = document.getElementById("contact-form");
+  const submitButton = form.querySelector('button[type="submit"]');
+  let isSubmitting = false;
+  let lastSubmittedAt = 0;
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (isSubmitting) return;
+    if (Date.now() - lastSubmittedAt < SUBMIT_COOLDOWN_MS) {
+      alert(
+        "Your message was already sent. Please wait a moment before sending another."
+      );
+      return;
+    }
+
+    const { elements } = form;
+    const payload = {
+      name: elements.name.value.trim(),
+      email: elements.email.value.trim(),
+      subject: elements.subject.value.trim(),
+      message: elements.message.value.trim(),
+      website: elements.website.value, // Honeypot: real visitors leave it empty
+    };
+
+    if (!payload.name || !payload.email || !payload.subject || !payload.message) {
+      alert("Please fill in all fields.");
+      return;
+    }
+    if (!EMAIL_PATTERN.test(payload.email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    isSubmitting = true;
+    submitButton.disabled = true;
+    form.setAttribute("aria-busy", "true");
+
+    try {
+      const response = await fetchWithTimeout(
+        CONTACT_ENDPOINT,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+        CONTACT_TIMEOUT_MS
+      );
+
+      if (response.status === 429) {
+        alert("Too many messages sent. Please try again in a few minutes.");
+        return;
       }
-    }
-  });
-});
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-// Active navigation link based on scroll position
-const sections = document.querySelectorAll("section");
-const navLinks = document.querySelectorAll(".nav-link");
-
-function setActiveNavLink() {
-  let current = "";
-
-  sections.forEach((section) => {
-    const sectionTop = section.offsetTop;
-    const sectionHeight = section.clientHeight;
-
-    if (window.scrollY >= sectionTop - 100) {
-      current = section.getAttribute("id");
-    }
-  });
-
-  navLinks.forEach((link) => {
-    link.classList.remove("active");
-    if (link.getAttribute("href") === `#${current}`) {
-      link.classList.add("active");
+      lastSubmittedAt = Date.now();
+      form.reset();
+      alert("Thank you for your message! I will get back to you soon.");
+    } catch (error) {
+      console.error("Contact form error:", error);
+      alert("Sorry, your message could not be sent. Please try again later.");
+    } finally {
+      isSubmitting = false;
+      submitButton.disabled = false;
+      form.removeAttribute("aria-busy");
     }
   });
 }
 
-window.addEventListener("scroll", setActiveNavLink);
-
-// Initial call to set active nav link
-setActiveNavLink();
+initThemeToggle();
+initSmoothScroll(initMobileMenu());
+initTypewriter();
+initScrollEffects();
+initContactForm();
