@@ -180,26 +180,68 @@ backToTopButton.addEventListener("click", (e) => {
 });
 
 // Form Submission
-const contactForm = document.getElementById("contact-form");
+// Public Supabase Edge Function URL (not a secret). See supabase/README.md.
+const CONTACT_ENDPOINT =
+  "https://hqzbguidhxppltpyqmzz.supabase.co/functions/v1/contact";
+const SUBMIT_COOLDOWN_MS = 30000;
 
-contactForm.addEventListener("submit", (e) => {
+const contactForm = document.getElementById("contact-form");
+const contactSubmitButton = contactForm.querySelector('button[type="submit"]');
+let isSubmitting = false;
+let lastSubmittedAt = 0;
+
+contactForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
+  if (isSubmitting) return;
+  if (Date.now() - lastSubmittedAt < SUBMIT_COOLDOWN_MS) {
+    alert("Your message was already sent. Please wait a moment before sending another.");
+    return;
+  }
+
   // Get form values
-  const name = document.getElementById("name").value;
-  const email = document.getElementById("email").value;
-  const subject = document.getElementById("subject").value;
-  const message = document.getElementById("message").value;
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const subject = document.getElementById("subject").value.trim();
+  const message = document.getElementById("message").value.trim();
+  const website = document.getElementById("website").value; // honeypot
 
-  // Here you would typically send the form data to a server
-  // For this demo, we'll just log it to the console
-  console.log("Form submitted:", { name, email, subject, message });
+  if (!name || !email || !subject || !message) {
+    alert("Please fill in all fields.");
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alert("Please enter a valid email address.");
+    return;
+  }
 
-  // Reset the form
-  contactForm.reset();
+  isSubmitting = true;
+  contactSubmitButton.disabled = true;
 
-  // Show a success message (in a real application)
-  alert("Thank you for your message! I will get back to you soon.");
+  try {
+    const response = await fetch(CONTACT_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, subject, message, website }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (response.status === 429) {
+      alert("Too many messages sent. Please try again in a few minutes.");
+      return;
+    }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    lastSubmittedAt = Date.now();
+    contactForm.reset();
+    alert("Thank you for your message! I will get back to you soon.");
+  } catch (err) {
+    console.error("Contact form error:", err);
+    alert("Sorry, your message could not be sent. Please try again later.");
+  } finally {
+    isSubmitting = false;
+    contactSubmitButton.disabled = false;
+  }
 });
 
 // Smooth scrolling for navigation links

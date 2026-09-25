@@ -584,9 +584,9 @@
           </p>
         </div>
 
-        <div class="flex flex-col md:flex-row gap-12">
-          <div class="md:w-2/3 animated-element" style="animation-delay: 0.3s">
-            <div class="contact-form-container p-8">
+        <div class="flex flex-col lg:flex-row gap-12">
+          <div class="lg:w-2/3 animated-element" style="animation-delay: 0.3s">
+            <div class="contact-form-container p-6 sm:p-8">
               <h3 class="text-2xl font-bold mb-6 gradient-text">
                 Send Me a Message
               </h3>
@@ -605,6 +605,7 @@
                       name="name"
                       class="contact-input"
                       placeholder="John Doe"
+                      maxlength="100"
                       required
                     />
                   </div>
@@ -620,6 +621,7 @@
                       name="email"
                       class="contact-input"
                       placeholder="john@example.com"
+                      maxlength="254"
                       required
                     />
                   </div>
@@ -637,6 +639,7 @@
                     name="subject"
                     class="contact-input"
                     placeholder="Project Inquiry"
+                    maxlength="200"
                     required
                   />
                 </div>
@@ -653,6 +656,7 @@
                     rows="5"
                     class="contact-input"
                     placeholder="Tell me about your project..."
+                    maxlength="5000"
                     required
                   ></textarea>
                 </div>
@@ -663,12 +667,17 @@
                 >
                   <i class="fas fa-paper-plane mr-2"></i> Send Message
                 </button>
+                <!-- Honeypot: hidden from people, bots tend to fill it -->
+                <div aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden">
+                  <label for="website">Website</label>
+                  <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+                </div>
               </form>
             </div>
           </div>
 
-          <div class="md:w-1/3 animated-element" style="animation-delay: 0.5s">
-            <div class="bg-blue-50 dark:bg-gray-800 p-8 rounded-2xl h-full">
+          <div class="lg:w-1/3 animated-element" style="animation-delay: 0.5s">
+            <div class="bg-blue-50 dark:bg-gray-800 p-6 sm:p-8 rounded-2xl h-full">
               <h3 class="text-2xl font-bold mb-6 gradient-text">
                 Contact Information
               </h3>
@@ -717,7 +726,7 @@
 
               <div class="mt-8">
                 <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-4">Follow Me</h4>
-                <div class="flex space-x-4">
+                <div class="flex flex-wrap gap-4">
                   <a href="https://www.linkedin.com/in/d-tarikul/" target="_blank" class="social-icon">
                     <i class="fab fa-linkedin-in"></i>
                   </a>

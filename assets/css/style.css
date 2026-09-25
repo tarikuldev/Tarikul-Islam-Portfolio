@@ -864,3 +864,13 @@ body {
 .color-card-green {
   border-top: 5px solid #10b981;
 }
+
+/* Contact section responsiveness */
+#contact .contact-icon {
+  flex-shrink: 0;
+}
+
+#contact .contact-info-item > div:last-child {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
